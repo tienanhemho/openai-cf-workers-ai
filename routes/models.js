@@ -14,7 +14,6 @@ const getModels = async env => {
 	}
 
 	const data = await response.json();
-
 	return data.result;
 };
 
@@ -24,7 +23,7 @@ export const modelsHandler = async (request, env) => {
 	const modelList = models.map(model => ({
 		id: model.name,
 		object: 'model',
-		created: Math.round(Date.now()),
+		created: Math.round(Date.now()/1000),
 		owned_by: model.source === 1 ? 'cloudflare' : 'huggingface',
 	}));
 

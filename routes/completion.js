@@ -1,5 +1,5 @@
 export const completionHandler = async (request, env) => {
-	let model = '@cf/mistral/mistral-7b-instruct-v0.1';
+	let model = '@cf/meta/llama-3.3-70b-instruct-fp8-fast';
 
 	const created = Math.floor(Date.now() / 1000);
 	const uuid = crypto.randomUUID();

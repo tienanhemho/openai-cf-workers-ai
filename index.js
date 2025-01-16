@@ -46,6 +46,7 @@ router
 	.post('/audio/translations', translationHandler)
 	.post('/images/generations', imageGenerationHandler)
 	.get('/images/get/:name', getImageHandler)
+	.get('/v1/models', modelsHandler)
 	.get('/models', modelsHandler);
 
 // 404 for everything else
