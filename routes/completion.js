@@ -21,15 +21,15 @@ export const completionHandler = async (request, env) => {
 					}
 				}
 			}
-			let gateway = null;
+			let options = {};
 			if (env.GATEWAY_ID !== '') {
-				gateway = {
+				options.gateway = {
 					id: env.GATEWAY_ID,
 					skipCache: env.GATEWAY_SKIP_CACHE,
 				}
 			}
 			// for now, nothing else does anything. Load the ai model.
-			const aiResp = await env.AI.run(model, { prompt: json.prompt }, gateway);
+			const aiResp = await env.AI.run(model, { prompt: json.prompt }, options);
 			return Response.json({
 				id: uuid,
 				model,
