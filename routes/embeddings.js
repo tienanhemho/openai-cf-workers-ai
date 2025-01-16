@@ -9,9 +9,16 @@ export const embeddingsHandler = async (request, env) => {
 			// 	model = json.model;
 			// }
 
+			let gateway = null;
+			if (env.GATEWAY_ID !== '') {
+				gateway = {
+					id: env.GATEWAY_ID,
+					skipCache: env.GATEWAY_SKIP_CACHE,
+				}
+			}
 			const embeddings = await env.AI.run(model, {
 				text: json.input,
-			});
+			}, gateway);
 
 			return Response.json({
 				object: 'list',

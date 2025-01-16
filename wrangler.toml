@@ -13,6 +13,8 @@ preview_bucket_name = "ai-images"
 [vars]
 CLOUDFLARE_ACCOUNT_ID = "09fcd959d3815207e18adf9620beac72" # replace with your own.
 MODEL_MAPPER = { "gpt-4o-mini" = "@cf/meta/llama-3.3-70b-instruct-fp8-fast" } # Optional
+GATEWAY_ID = "ka"
+GATEWAY_SKIP_CACHE = true
 
 [observability.logs]
 enabled = true
