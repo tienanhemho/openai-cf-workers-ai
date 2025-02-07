@@ -6,7 +6,7 @@ export const chatHandler = async (request, env) => {
 	// get the current time in epoch seconds
 	const created = Math.floor(Date.now() / 1000);
 	const uuid = crypto.randomUUID();
-
+	let argumentString = '';
 	try {
 		// If the POST data is JSON then attach it to our response.
 		if (request.headers.get('Content-Type') === 'application/json') {
@@ -26,7 +26,15 @@ export const chatHandler = async (request, env) => {
 			}
 			if (!json?.stream) json.stream = false;
 
-			let buffer = '';
+			let buffer = '';			
+			const isValidJSON = (str) => {
+				try {
+					JSON.parse(str);
+					return true;
+				} catch (e) {
+					return false;
+				}
+			}
 			const decoder = new TextDecoder();
 			const encoder = new TextEncoder();
 			const transformer = new TransformStream({
@@ -50,7 +58,7 @@ export const chatHandler = async (request, env) => {
 						try {
 							if (line.startsWith('data: ')) {
 								const content = line.slice('data: '.length);
-								console.log(content);
+								// console.log(content);
 								const doneflag = content.trim() == '[DONE]';
 								if (doneflag) {
 									controller.enqueue(encoder.encode("data: [DONE]\n\n"));
@@ -58,6 +66,26 @@ export const chatHandler = async (request, env) => {
 								}
 
 								const data = JSON.parse(content);
+								let delta = {
+								};
+								argumentString += data.response;
+								if (data.response === '') {
+									if (isValidJSON(argumentString)) {
+										delta.tool_calls = [];
+										delta.tool_calls.push({
+											id: "call_" + crypto.randomUUID(),
+											function: {
+												name: JSON.parse(argumentString).name,
+												arguments: JSON.stringify(JSON.parse(argumentString).parameters),
+											},
+										});
+										console.log(delta);
+									}
+									else {
+										delta.content = argumentString;
+										console.log(delta);
+									}
+								}
 								const newChunk =
 									'data: ' +
 									JSON.stringify({
@@ -67,7 +95,7 @@ export const chatHandler = async (request, env) => {
 										model,
 										choices: [
 											{
-												delta: { content: data.response },
+												delta: delta,
 												index: 0,
 												finish_reason: null,
 											},
@@ -91,16 +119,43 @@ export const chatHandler = async (request, env) => {
 					skipCache: env.GATEWAY_SKIP_CACHE,
 				}
 			}
+			let body = {
+				stream: json.stream,
+				messages
+			};
+			if (json?.temperature) body.temperature = json.temperature;
+			if (json?.top_p) body.top_p = json.top_p;
+			if (json?.n) body.n = json.n;
+			if (json?.stop) body.stop = json.stop;
+			if (json?.max_tokens) body.max_tokens = json.max_tokens;
+			if (json?.presence_penalty) body.presence_penalty = json.presence_penalty;
+			if (json?.frequency_penalty) body.frequency_penalty = json.frequency_penalty;
+			if (json?.tools) body.tools = json.tools;
+			// console.log(body);
+
 			// for now, nothing else does anything. Load the ai model.
-			const aiResp = await env.AI.run(model, { stream: json.stream, messages }, options);
+			const aiResp = await env.AI.run(model, body, options);
 			// Piping the readableStream through the transformStream
-			return json.stream ? new Response(aiResp.pipeThrough(transformer), {
-				headers: {
-					'content-type': 'text/event-stream',
-					'Cache-Control': 'no-cache',
-					'Connection': 'keep-alive',
-				},
-			}) : Response.json({
+			if (json.stream) {
+				return new Response(aiResp.pipeThrough(transformer), {
+					headers: {
+						'content-type': 'text/event-stream',
+						'Cache-Control': 'no-cache',
+						'Connection': 'keep-alive',
+					},
+				});
+			}
+			let message = {
+				role: 'assistant',
+			};
+			if (aiResp.response) {
+				message.content = aiResp.response;
+			}
+			if (aiResp.tool_calls) {
+				message.tool_calls = aiResp.tool_calls;
+			}
+			// console.log(aiResp);
+			return Response.json({
 				id: uuid,
 				model,
 				created,
@@ -108,10 +163,7 @@ export const chatHandler = async (request, env) => {
 				choices: [
 					{
 						index: 0,
-						message: {
-							role: 'assistant',
-							content: aiResp.response,
-						},
+						message: message,
 						finish_reason: 'stop',
 					},
 				],
