@@ -39,7 +39,7 @@ export const imageGenerationHandler = async (request, env) => {
                 });
             } else {
                 const name = uuidv4() + '.png';
-                await env.IMAGE_BUCKET.put(name, respBuffer);
+                // await env.IMAGE_BUCKET.put(name, respBuffer);
                 // the url is https:// + request url origin + /images/get/ + name
                 const urlObj = new URL(request.url);
                 const url = urlObj.origin + '/v1/images/get/' + name;
@@ -84,7 +84,7 @@ export const getImageHandler = async (request, env) => {
 			status: 404,
 		});
 	}
-	const image = await env.IMAGE_BUCKET.get(name);
+	// const image = await env.IMAGE_BUCKET.get(name);
 	if (!image) {
 		return new Response(null, {
 			status: 404,

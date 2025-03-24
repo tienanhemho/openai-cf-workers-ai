@@ -27,6 +27,8 @@ export const chatHandler = async (request, env) => {
 			if (!json?.stream) json.stream = false;
 
 			let buffer = '';
+			let isLastChunk = false;
+			let isToolCall = false;
 			const isValidJSON = (str) => {
 				try {
 					JSON.parse(str);
@@ -66,11 +68,13 @@ export const chatHandler = async (request, env) => {
 								}
 
 								const data = JSON.parse(content);
+								// console.log(content);
+								argumentString += data.response;
 								let delta = {
 								};
-								argumentString += data.response;
-								if (data.response === '') {
+								if (data.usage) {
 									if (isValidJSON(argumentString)) {
+										isToolCall = true;
 										let toolCalls = JSON.parse(argumentString);
 										delta.tool_calls = [];
 										if (!Array.isArray(toolCalls)) {
@@ -115,11 +119,14 @@ export const chatHandler = async (request, env) => {
 											{
 												delta: delta,
 												index: 0,
-												finish_reason: delta.tool_calls ? 'function_call' : null,
+												logprobs: null,
+												finish_reason: isLastChunk && isToolCall ? 'tool_calls' : null,
 											},
 										],
 									}) +
 									'\n\n';
+
+								isLastChunk = true;
 								controller.enqueue(encoder.encode(newChunk));
 							}
 						} catch (err) {
