@@ -26,7 +26,7 @@ export const chatHandler = async (request, env) => {
 			}
 			if (!json?.stream) json.stream = false;
 
-			let buffer = '';			
+			let buffer = '';
 			const isValidJSON = (str) => {
 				try {
 					JSON.parse(str);
@@ -78,6 +78,7 @@ export const chatHandler = async (request, env) => {
 												name: JSON.parse(argumentString).name,
 												arguments: JSON.stringify(JSON.parse(argumentString).parameters),
 											},
+											type: 'function',
 										});
 										console.log(delta);
 									}
@@ -97,7 +98,7 @@ export const chatHandler = async (request, env) => {
 											{
 												delta: delta,
 												index: 0,
-												finish_reason: null,
+												finish_reason: delta.tool_calls ? 'function_call' : null,
 											},
 										],
 									}) +
@@ -111,7 +112,7 @@ export const chatHandler = async (request, env) => {
 				},
 			});
 
-			
+
 			let options = {};
 			if (env.GATEWAY_ID !== '') {
 				options.gateway = {
