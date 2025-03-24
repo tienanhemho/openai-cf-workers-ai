@@ -71,16 +71,32 @@ export const chatHandler = async (request, env) => {
 								argumentString += data.response;
 								if (data.response === '') {
 									if (isValidJSON(argumentString)) {
+										let toolCalls = JSON.parse(argumentString);
 										delta.tool_calls = [];
-										delta.tool_calls.push({
-											index: 0,
-											id: "call_" + crypto.randomUUID(),
-											function: {
-												name: JSON.parse(argumentString).name,
-												arguments: JSON.stringify(JSON.parse(argumentString).parameters),
-											},
-											type: 'function',
-										});
+										if (!Array.isArray(toolCalls)) {
+											delta.tool_calls.push({
+												index: 0,
+												id: "call_" + crypto.randomUUID(),
+												function: {
+													name: JSON.parse(argumentString).name,
+													arguments: JSON.stringify(JSON.parse(argumentString).parameters),
+												},
+												type: 'function',
+											});
+										}
+										else {
+											toolCalls.forEach((call, index) => {
+												delta.tool_calls.push({
+													index: index,
+													id: "call_" + crypto.randomUUID(),
+													function: {
+														name: call.name,
+														arguments: JSON.stringify(call.parameters),
+													},
+													type: 'function',
+												});
+											});
+										}
 										console.log(delta);
 									}
 									else {
