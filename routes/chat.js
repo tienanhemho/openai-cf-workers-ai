@@ -73,6 +73,7 @@ export const chatHandler = async (request, env) => {
 									if (isValidJSON(argumentString)) {
 										delta.tool_calls = [];
 										delta.tool_calls.push({
+											index: 0,
 											id: "call_" + crypto.randomUUID(),
 											function: {
 												name: JSON.parse(argumentString).name,
