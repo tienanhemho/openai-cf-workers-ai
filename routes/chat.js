@@ -78,8 +78,8 @@ export const chatHandler = async (request, env) => {
 												index: 0,
 												id: "call_" + crypto.randomUUID(),
 												function: {
-													name: JSON.parse(argumentString).name,
-													arguments: JSON.stringify(JSON.parse(argumentString).parameters),
+													name: toolCalls.name,
+													arguments: JSON.stringify(toolCalls.parameters),
 												},
 												type: 'function',
 											});
